@@ -27,32 +27,24 @@ void sendMeasuresOnWeb(int measureSensorA, int measureSensorB, int measureSensor
   array.add(measureSensorB);
   array.add(measureSensorC);
 
+  sendJsonToWebClient(doc);
+}
+
+void sendJsonToWebClient(DynamicJsonDocument doc) {
   char output[128];
-
-  // serialize the array and send the result to Serial
   serializeJson(doc, output);
-
   server.send(200, "application/json", output);
-  Serial.println("Tableau mesures envoyees");
 }
 
-void sendMeasureRequestToArduino() {
-  // Send a JSON-formatted request with key "type" and value "request"
-  // then parse the JSON-formatted response with keys "gas" and "distance"
-  DynamicJsonDocument doc(1024);
-  // Sending the request
-  doc["type"] = "request";
-  serializeJson(doc, Serial);
-}
 
-void runMeasuresProcess() {
+DynamicJsonDocument readArduinoResponse() {
   sendMeasureRequestToArduino();
   DynamicJsonDocument doc(1024);
 
   // Reading the response
   boolean messageReady = false;
   String message = "";
-  while (messageReady == false) { // blocking but that's ok
+  while (messageReady == false) {
     if (Serial.available()) {
       message = Serial.readString();
       messageReady = true;
@@ -63,8 +55,34 @@ void runMeasuresProcess() {
   if (error) {
     Serial.print(F("deserializeJson() failed: "));
     Serial.println(error.c_str());
-    return;
   }
+
+  return doc;
+}
+
+void sendPumpCommand() {
+  DynamicJsonDocument doc(1024);
+  doc["type"] = "command";
+  doc["subtype"] = "pump";
+  serializeJson(doc, Serial);
+}
+
+void runPumpProcess() {
+  sendPumpCommand();
+  DynamicJsonDocument doc = readArduinoResponse(); // IN PROGRESS
+  sendJsonToWebClient(doc);
+  doc = readArduinoResponse(); // DONE
+  sendJsonToWebClient(doc);
+}
+
+void sendMeasureRequestToArduino() {
+  DynamicJsonDocument doc(1024);
+  doc["type"] = "request";
+  serializeJson(doc, Serial);
+}
+
+void runMeasuresProcess() {
+  DynamicJsonDocument doc = readArduinoResponse();
   const int humidity_sensorA = doc["sensorA"];
   const int humidity_sensorB = doc["sensorB"];
   const int humidity_sensorC = doc["sensorC"];
@@ -93,19 +111,19 @@ void setup() {
     Serial.println("SPIFFS Mount succesfull");
   }
 
-  // Serve files
-  //server.serveStatic("/images", SPIFFS, "/images");
-  //server.serveStatic("/js", SPIFFS, "/js");
-
-  //server.serveStatic("/", SPIFFS, "/index.html");
-  //server.serveStatic("/styles.css", SPIFFS, "/styles.css");
-  //server.sendHeader("Access-Control-Allow-Origin", "*");
-
   server.on("/measures.json", HTTP_GET, []() {
     server.sendHeader("Access-Control-Allow-Origin", "*");
     server.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
     server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     runMeasuresProcess();
+  });
+
+
+  server.on("/pump", HTTP_GET, []() {
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
+    server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    runPumpProcess();
   });
 
 
