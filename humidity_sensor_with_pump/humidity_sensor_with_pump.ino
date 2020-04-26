@@ -4,7 +4,7 @@
 #include <Wire.h>
 
 #define CHECKING_INTERVAL 10000
-#define PUMP_RUNNING_TIME 5000 // in ms
+#define PUMP_RUNNING_TIME 15000 // in ms
 #define SENSOR_THRESHOLD 65
 
 // Define Slave I2C Address
@@ -50,15 +50,17 @@ void printSensorValues() {
   Serial.println(humidity_sensorC);
 }
 
+void runPump(int time) {
+  digitalWrite(pumpPin, HIGH);
+  delay(time);
+  digitalWrite(pumpPin, LOW);
+}
+
 void checkPumpState() {
   if (millis() % CHECKING_INTERVAL <= 100) {
     Serial.println("Checking");
     if (shouldEnablePump(humidity_sensorA, humidity_sensorB, humidity_sensorC)) {
-      Serial.println("enable pump");
-      digitalWrite(pumpPin, HIGH);
-      delay(PUMP_RUNNING_TIME);
-      Serial.println("disable pump");
-      digitalWrite(pumpPin, LOW);
+      runPump(PUMP_RUNNING_TIME);
     }
   }
 }
@@ -71,11 +73,9 @@ void handleMonitorSerialCommunication() {
     message = Serial.readString();
     messageReady = true;
   }
-  // Only process message if there's one
+
   if (messageReady) {
-    // The only messages we'll parse will be formatted in JSON
     DynamicJsonDocument doc(1024); // ArduinoJson version 6+
-    // Attempt to deserialize the message
     DeserializationError error = deserializeJson(doc, message);
     if (error) {
       Serial.print(F("deserializeJson() failed: "));
@@ -84,6 +84,7 @@ void handleMonitorSerialCommunication() {
       return;
     }
 
+    Serial.println(message);
 
     if (doc["type"] == "request") {
       doc["type"] = "response";
@@ -91,6 +92,15 @@ void handleMonitorSerialCommunication() {
       doc["sensorA"] = humidity_sensorA;
       doc["sensorB"] = humidity_sensorB;
       doc["sensorC"] = humidity_sensorC;
+      serializeJson(doc, Serial);
+    }
+
+    if (doc["type"] == "command" && doc["subtype"] == "pump") {
+      doc["type"] = "response";
+      doc["status"] = "IN_PROGRESS";
+      serializeJson(doc, Serial);
+      runPump(PUMP_RUNNING_TIME);
+      doc["status"] = "DONE";
       serializeJson(doc, Serial);
     }
 
