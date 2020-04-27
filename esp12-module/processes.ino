@@ -6,3 +6,11 @@ void runMeasuresProcess() {
   const int humidity_sensorC = doc["sensorC"];
   sendMeasuresToWebClient(humidity_sensorA, humidity_sensorB, humidity_sensorC);
 }
+
+
+void runPumpCommandProcess() {
+  sendPumpCommand();
+  sendACK();
+  pumpState = 1;
+  delay(300);
+}

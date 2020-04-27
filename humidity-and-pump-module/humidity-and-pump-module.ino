@@ -1,17 +1,8 @@
 #include <ArduinoJson.h>
 
-// Include Arduino Wire library for I2C
-#include <Wire.h>
-
 #define CHECKING_INTERVAL 10000
 #define PUMP_RUNNING_TIME 15000 // in ms
 #define SENSOR_THRESHOLD 65
-
-// Define Slave I2C Address
-#define SLAVE_ADDR 9
-
-// Define Slave answer size
-#define ANSWERSIZE 3
 
 const int pumpPin = 2;
 
@@ -28,9 +19,7 @@ int humidity_sensorC = humidity(analogRead(2));
 void setup() {
   Serial.begin(9600);
   pinMode(pumpPin, OUTPUT);
-  // Initialize I2C communications as Master
-  Wire.begin();
-  Serial.println("Init");
+  Serial.println("Init Arduino");
 }
 
 
@@ -71,22 +60,22 @@ void handleMonitorSerialCommunication() {
 
   while (Serial.available()) {
     message = Serial.readString();
+    Serial.println(message);
     messageReady = true;
   }
 
   if (messageReady) {
-    DynamicJsonDocument doc(1024); // ArduinoJson version 6+
+    DynamicJsonDocument doc(1024); 
     DeserializationError error = deserializeJson(doc, message);
     if (error) {
-      Serial.print(F("deserializeJson() failed: "));
+      Serial.print(F("Arduino deserializeJson() failed: "));
       Serial.println(error.c_str());
       messageReady = false;
       return;
     }
 
-    Serial.println(message);
-
     if (doc["type"] == "request") {
+      refreshSensorValues();
       doc["type"] = "response";
       // Get data from analog sensors
       doc["sensorA"] = humidity_sensorA;
@@ -109,17 +98,5 @@ void handleMonitorSerialCommunication() {
 }
 
 void loop() {
-  refreshSensorValues();
   handleMonitorSerialCommunication();
-  //printSensorValues();
-  //checkPumpState();
-  //Wire.beginTransmission(SLAVE_ADDR);
-  //Wire.write(humidity_sensorA);
-  //Wire.write(humidity_sensorB);
-  //Wire.write(humidity_sensorC);
-  //Wire.endTransmission();
-
-  //Wire.requestFrom(SLAVE_ADDR, ANSWERSIZE);
-
-
 }

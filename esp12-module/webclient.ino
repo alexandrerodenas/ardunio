@@ -13,6 +13,14 @@ void sendMeasuresToWebClient(int measureSensorA, int measureSensorB, int measure
   sendJsonToWebClient(doc);
 }
 
+void sendACK() {
+  DynamicJsonDocument doc(1024);
+  doc["type"] = "response";
+  doc["value"] = "ACK";
+  sendJsonToWebClient(doc);
+}
+
+
 void sendPumpState() {
   DynamicJsonDocument doc(1024);
   doc["state"] = pumpState;

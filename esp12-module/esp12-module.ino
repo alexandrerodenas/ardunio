@@ -11,11 +11,11 @@
 
 ESP8266WebServer server ( 80 );
 
-int pumpState = 0; // 0 = NOT WORKING; 1 = IN PROGRESS
+int pumpState = 0; // 0 = OFF; 1 = ON
 
 void setup() {
   Serial.begin ( 9600 );
-  Serial.println("init");
+  Serial.println("init esp12");
   WiFi.begin ( ssid, password );
   // Wait for WiFi connection
   while ( WiFi.status() != WL_CONNECTED ) {
@@ -46,7 +46,7 @@ void setup() {
     server.sendHeader("Access-Control-Allow-Origin", "*");
     server.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
     server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    sendPumpCommand();
+    runPumpCommandProcess();
   });
 
 
@@ -56,7 +56,7 @@ void setup() {
     server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     sendPumpState();
   });
-  
+
   // Démarre le serveur web - Start Web Server
   server.begin();
   Serial.println ( "HTTP server started" );
@@ -67,14 +67,8 @@ void loop() {
   // Regularly checks the connection of new clients
   server.handleClient();
   DynamicJsonDocument doc = readAsyncArduinoResponse();
-  if(doc["type"] == "response"){
-    if(doc["subtype"] == "pump"){
-      if(doc["status"] == "DONE"){
-        pumpState = 0;
-      } else {
-        pumpState = 1;
-      }
-    }
+
+  if (doc["type"] == "response" && doc["subtype"] == "pump" && doc["status"] == "DONE") {
+    pumpState = 0;
   }
-  delay(100);
 }

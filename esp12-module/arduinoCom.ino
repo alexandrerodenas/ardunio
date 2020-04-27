@@ -13,7 +13,7 @@ DynamicJsonDocument readArduinoResponse() {
   // Attempt to deserialize the JSON-formatted message
   DeserializationError error = deserializeJson(doc, message);
   if (error) {
-    Serial.print(F("deserializeJson() failed: "));
+    Serial.print(F("ESP12 - SYNC deserializeJson() failed: "));
     Serial.println(error.c_str());
   }
 
@@ -26,10 +26,6 @@ DynamicJsonDocument readAsyncArduinoResponse() {
   if (Serial.available()) {
     String message = Serial.readString();
     DeserializationError error = deserializeJson(doc, message);
-    if (error) {
-      Serial.print(F("deserializeJson() failed: "));
-      Serial.println(error.c_str());
-    }
   }
 
   return doc;
