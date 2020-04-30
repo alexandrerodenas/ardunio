@@ -11,8 +11,6 @@
 
 ESP8266WebServer server ( 80 );
 
-int pumpState = 0; // 0 = OFF; 1 = ON
-
 void setup() {
   Serial.begin ( 9600 );
   Serial.println("init esp12");
@@ -42,19 +40,19 @@ void setup() {
   });
 
 
-  server.on("/pump", HTTP_GET, []() {
+  server.on("/pump/stop", HTTP_GET, []() {
     server.sendHeader("Access-Control-Allow-Origin", "*");
     server.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
     server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    runPumpCommandProcess();
+    sendStopPumpCommand();
   });
 
 
-  server.on("/pump/state", HTTP_GET, []() {
+  server.on("/pump/start", HTTP_GET, []() {
     server.sendHeader("Access-Control-Allow-Origin", "*");
     server.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
     server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    sendPumpState();
+    sendStarPumpCommand();
   });
 
   // Démarre le serveur web - Start Web Server
@@ -66,9 +64,4 @@ void setup() {
 void loop() {
   // Regularly checks the connection of new clients
   server.handleClient();
-  DynamicJsonDocument doc = readAsyncArduinoResponse();
-
-  if (doc["type"] == "response" && doc["subtype"] == "pump" && doc["status"] == "DONE") {
-    pumpState = 0;
-  }
 }

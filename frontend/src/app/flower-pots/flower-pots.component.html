@@ -1,4 +1,6 @@
-<img class="watering-can" src="../../assets/watering-can.svg"/>
+<img *ngIf="pumpRunning" (click)="stopPump()" class="watering-can" src="../../assets/tube_water_on.svg"/>
+<img *ngIf="!pumpRunning" (click)="startPump()" class="watering-can" src="../../assets/tube_water_off.svg"/>
+
 <div class="container space-top">
   <img src="../../assets/plant.svg"/>
   <img src="../../assets/plant.svg"/>

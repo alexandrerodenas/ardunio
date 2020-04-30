@@ -1,4 +1,4 @@
-DynamicJsonDocument readArduinoResponse() {
+DynamicJsonDocument readArduinoJsonResponse() {
   DynamicJsonDocument doc(1024);
 
   // Reading the response
@@ -20,23 +20,21 @@ DynamicJsonDocument readArduinoResponse() {
   return doc;
 }
 
-DynamicJsonDocument readAsyncArduinoResponse() {
-  DynamicJsonDocument doc(1024);
-
-  if (Serial.available()) {
-    String message = Serial.readString();
-    DeserializationError error = deserializeJson(doc, message);
+String readArduinoSerialResponse(int timeout) {
+  boolean messageReady = false;
+  String message = "";
+  int waitingTime = 0;
+  while (messageReady == false && waitingTime < timeout) {
+    if (Serial.available()) {
+      message = Serial.readString();
+      return message;
+    }
   }
 
-  return doc;
+  return "NOK";
 }
 
-void sendPumpCommand() {
-  DynamicJsonDocument doc(1024);
-  doc["type"] = "command";
-  doc["subtype"] = "pump";
-  serializeJson(doc, Serial);
-}
+
 
 void sendMeasureRequest() {
   DynamicJsonDocument doc(1024);

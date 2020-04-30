@@ -60,39 +60,43 @@ void handleMonitorSerialCommunication() {
 
   while (Serial.available()) {
     message = Serial.readString();
-    Serial.println(message);
     messageReady = true;
   }
 
   if (messageReady) {
-    DynamicJsonDocument doc(1024); 
-    DeserializationError error = deserializeJson(doc, message);
-    if (error) {
-      Serial.print(F("Arduino deserializeJson() failed: "));
-      Serial.println(error.c_str());
-      messageReady = false;
-      return;
-    }
+    if (message == "START_PUMP") {
+      digitalWrite(pumpPin, HIGH);
+    } else if (message == "STOP_PUMP") {
+      digitalWrite(pumpPin, LOW);
+    } else {
+      DynamicJsonDocument doc(1024);
+      DeserializationError error = deserializeJson(doc, message);
+      if (error) {
+        Serial.print(F("Arduino deserializeJson() failed: "));
+        Serial.println(error.c_str());
+        messageReady = false;
+        return;
+      }
 
-    if (doc["type"] == "request") {
-      refreshSensorValues();
-      doc["type"] = "response";
-      // Get data from analog sensors
-      doc["sensorA"] = humidity_sensorA;
-      doc["sensorB"] = humidity_sensorB;
-      doc["sensorC"] = humidity_sensorC;
-      serializeJson(doc, Serial);
-    }
+      if (doc["type"] == "request") {
+        refreshSensorValues();
+        doc["type"] = "response";
+        // Get data from analog sensors
+        doc["sensorA"] = humidity_sensorA;
+        doc["sensorB"] = humidity_sensorB;
+        doc["sensorC"] = humidity_sensorC;
+        serializeJson(doc, Serial);
+      }
 
-    if (doc["type"] == "command" && doc["subtype"] == "pump") {
-      doc["type"] = "response";
-      doc["status"] = "IN_PROGRESS";
-      serializeJson(doc, Serial);
-      runPump(PUMP_RUNNING_TIME);
-      doc["status"] = "DONE";
-      serializeJson(doc, Serial);
+      if (doc["type"] == "command" && doc["subtype"] == "pump") {
+        doc["type"] = "response";
+        doc["status"] = "IN_PROGRESS";
+        serializeJson(doc, Serial);
+        runPump(PUMP_RUNNING_TIME);
+        doc["status"] = "DONE";
+        serializeJson(doc, Serial);
+      }
     }
-
     messageReady = false;
   }
 }
