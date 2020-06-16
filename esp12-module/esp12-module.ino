@@ -8,6 +8,10 @@
 #define ssid      "SFR-e600"
 #define password  "RodeTrip@12"
 
+const short int pinPump = 16; // GPIO16 D3
+const short int pinRedLed = 5; // GPIO5 D1
+const short int pinGreenLed = 0; // GPIO0 D0
+
 
 ESP8266WebServer server ( 80 );
 
@@ -23,6 +27,10 @@ void setup() {
   Serial.println ( "" );
   Serial.print ( "Connected to " ); Serial.println ( ssid );
   Serial.print ( "IP address: " ); Serial.println ( WiFi.localIP() );
+
+  pinMode(pinPump, OUTPUT);
+  pinMode(pinRedLed, OUTPUT);
+  pinMode(pinGreenLed, OUTPUT);
 
   if (!SPIFFS.begin())
   {
@@ -52,7 +60,7 @@ void setup() {
     server.sendHeader("Access-Control-Allow-Origin", "*");
     server.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
     server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    sendStarPumpCommand();
+    sendStartPumpCommand();
   });
 
   // Démarre le serveur web - Start Web Server
