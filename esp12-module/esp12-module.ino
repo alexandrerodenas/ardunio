@@ -5,8 +5,8 @@
 #include <ArduinoJson.h>
 #include <math.h>
 
-#define ssid      "SFR-e600"
-#define password  "RodeTrip@12"
+#define ssid      ""
+#define password  ""
 
 const short int pinPump = 16; // GPIO16 D3
 const short int pinRedLed = 5; // GPIO5 D1
